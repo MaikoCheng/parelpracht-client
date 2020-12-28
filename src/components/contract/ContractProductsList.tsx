@@ -44,10 +44,10 @@ class CompanyContactList extends React.Component<Props, State> {
             style={{ marginTop: '-0.5em' }}
             basic
             as={NavLink}
-            to={`${this.props.location.pathname}/contract/new`}
+            to={`${this.props.location.pathname}/product/new`}
           >
             <Icon name="plus" />
-            Add Contract
+            Add Product
           </Button>
         </h3>
         {products.map((product) => (
