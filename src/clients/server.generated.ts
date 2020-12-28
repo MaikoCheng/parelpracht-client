@@ -1164,6 +1164,110 @@ export class Client {
     }
 
     /**
+     * @param id ID of company to retrieve unresolved invoices for
+     * @return Ok
+     */
+    getUnresolvedInvoices(id: number): Promise<Invoice[]> {
+        let url_ = this.baseUrl + "/company/company/{id}/invoices";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetUnresolvedInvoices(_response);
+        });
+    }
+
+    protected processGetUnresolvedInvoices(response: Response): Promise<Invoice[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(Invoice.fromJS(item));
+            }
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            let resultData401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result401 = WrappedApiError.fromJS(resultData401);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result401);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<Invoice[]>(<any>null);
+    }
+
+    /**
+     * @param id ID of company to retrieve unresolved invoices for
+     * @return Ok
+     */
+    getContacts(id: number): Promise<Contact[]> {
+        let url_ = this.baseUrl + "/company/company/{id}/contacts";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetContacts(_response);
+        });
+    }
+
+    protected processGetContacts(response: Response): Promise<Contact[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(Contact.fromJS(item));
+            }
+            return result200;
+            });
+        } else if (status === 401) {
+            return response.text().then((_responseText) => {
+            let result401: any = null;
+            let resultData401 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result401 = WrappedApiError.fromJS(resultData401);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result401);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<Contact[]>(<any>null);
+    }
+
+    /**
      * @param col (optional) Sorted column
      * @param dir (optional) Sorting direction
      * @param skip (optional) Number of elements to skip
@@ -3157,6 +3261,7 @@ export enum Roles {
     FINANCIAL = "FINANCIAL",
     ADMIN = "ADMIN",
     GENERAL = "GENERAL",
+    AUDIT = "AUDIT",
 }
 
 export class UserParams implements IUserParams {
@@ -3785,6 +3890,10 @@ export class Contract implements IContract {
     company!: Company;
     /** All products in the contract */
     products!: ProductInstance[];
+    createdById!: number;
+    createdBy!: User;
+    assignedToId!: number;
+    assignedTo!: User;
     contactId!: number;
     /** The contact this contract has been closed with */
     contact!: Contact;
@@ -3801,6 +3910,8 @@ export class Contract implements IContract {
         if (!data) {
             this.company = new Company();
             this.products = [];
+            this.createdBy = new User();
+            this.assignedTo = new User();
             this.contact = new Contact();
             this.contractActivity = [];
         }
@@ -3822,6 +3933,10 @@ export class Contract implements IContract {
                 for (let item of _data["products"])
                     this.products!.push(ProductInstance.fromJS(item));
             }
+            this.createdById = _data["createdById"];
+            this.createdBy = _data["createdBy"] ? User.fromJS(_data["createdBy"]) : new User();
+            this.assignedToId = _data["assignedToId"];
+            this.assignedTo = _data["assignedTo"] ? User.fromJS(_data["assignedTo"]) : new User();
             this.contactId = _data["contactId"];
             this.contact = _data["contact"] ? Contact.fromJS(_data["contact"]) : new Contact();
             if (Array.isArray(_data["contractActivity"])) {
@@ -3855,6 +3970,10 @@ export class Contract implements IContract {
             for (let item of this.products)
                 data["products"].push(item.toJSON());
         }
+        data["createdById"] = this.createdById;
+        data["createdBy"] = this.createdBy ? this.createdBy.toJSON() : <any>undefined;
+        data["assignedToId"] = this.assignedToId;
+        data["assignedTo"] = this.assignedTo ? this.assignedTo.toJSON() : <any>undefined;
         data["contactId"] = this.contactId;
         data["contact"] = this.contact ? this.contact.toJSON() : <any>undefined;
         if (Array.isArray(this.contractActivity)) {
@@ -3886,6 +4005,10 @@ export interface IContract {
     company: Company;
     /** All products in the contract */
     products: ProductInstance[];
+    createdById: number;
+    createdBy: User;
+    assignedToId: number;
+    assignedTo: User;
     contactId: number;
     /** The contact this contract has been closed with */
     contact: Contact;
@@ -4222,6 +4345,10 @@ export class Invoice implements IInvoice {
     /** Any comments regarding this invoice */
     comments?: string;
     companyId!: number;
+    createdById!: number;
+    createdBy!: User;
+    assignedToId!: number;
+    assignedTo!: User;
     /** Company this invoice is directed to */
     company!: Company;
     /** All activities regarding this invoice */
@@ -4236,6 +4363,8 @@ export class Invoice implements IInvoice {
         }
         if (!data) {
             this.products = [];
+            this.createdBy = new User();
+            this.assignedTo = new User();
             this.company = new Company();
             this.invoiceActivities = [];
         }
@@ -4256,6 +4385,10 @@ export class Invoice implements IInvoice {
             this.poNumber = _data["poNumber"];
             this.comments = _data["comments"];
             this.companyId = _data["companyId"];
+            this.createdById = _data["createdById"];
+            this.createdBy = _data["createdBy"] ? User.fromJS(_data["createdBy"]) : new User();
+            this.assignedToId = _data["assignedToId"];
+            this.assignedTo = _data["assignedTo"] ? User.fromJS(_data["assignedTo"]) : new User();
             this.company = _data["company"] ? Company.fromJS(_data["company"]) : new Company();
             if (Array.isArray(_data["invoiceActivities"])) {
                 this.invoiceActivities = [] as any;
@@ -4287,6 +4420,10 @@ export class Invoice implements IInvoice {
         data["poNumber"] = this.poNumber;
         data["comments"] = this.comments;
         data["companyId"] = this.companyId;
+        data["createdById"] = this.createdById;
+        data["createdBy"] = this.createdBy ? this.createdBy.toJSON() : <any>undefined;
+        data["assignedToId"] = this.assignedToId;
+        data["assignedTo"] = this.assignedTo ? this.assignedTo.toJSON() : <any>undefined;
         data["company"] = this.company ? this.company.toJSON() : <any>undefined;
         if (Array.isArray(this.invoiceActivities)) {
             data["invoiceActivities"] = [];
@@ -4315,6 +4452,10 @@ export interface IInvoice {
     /** Any comments regarding this invoice */
     comments?: string;
     companyId: number;
+    createdById: number;
+    createdBy: User;
+    assignedToId: number;
+    assignedTo: User;
     /** Company this invoice is directed to */
     company: Company;
     /** All activities regarding this invoice */
@@ -5701,6 +5842,7 @@ export class ContractParams implements IContractParams {
     companyId!: number;
     contactId!: number;
     comments?: string;
+    assignedToId?: number;
 
     constructor(data?: IContractParams) {
         if (data) {
@@ -5717,6 +5859,7 @@ export class ContractParams implements IContractParams {
             this.companyId = _data["companyId"];
             this.contactId = _data["contactId"];
             this.comments = _data["comments"];
+            this.assignedToId = _data["assignedToId"];
         }
     }
 
@@ -5733,6 +5876,7 @@ export class ContractParams implements IContractParams {
         data["companyId"] = this.companyId;
         data["contactId"] = this.contactId;
         data["comments"] = this.comments;
+        data["assignedToId"] = this.assignedToId;
         return data; 
     }
 }
@@ -5742,6 +5886,7 @@ export interface IContractParams {
     companyId: number;
     contactId: number;
     comments?: string;
+    assignedToId?: number;
 }
 
 /** Make all properties in T optional */
@@ -5750,6 +5895,7 @@ export class Partial_ContractParams implements IPartial_ContractParams {
     companyId?: number;
     contactId?: number;
     comments?: string;
+    assignedToId?: number;
 
     constructor(data?: IPartial_ContractParams) {
         if (data) {
@@ -5766,6 +5912,7 @@ export class Partial_ContractParams implements IPartial_ContractParams {
             this.companyId = _data["companyId"];
             this.contactId = _data["contactId"];
             this.comments = _data["comments"];
+            this.assignedToId = _data["assignedToId"];
         }
     }
 
@@ -5782,6 +5929,7 @@ export class Partial_ContractParams implements IPartial_ContractParams {
         data["companyId"] = this.companyId;
         data["contactId"] = this.contactId;
         data["comments"] = this.comments;
+        data["assignedToId"] = this.assignedToId;
         return data; 
     }
 }
@@ -5792,6 +5940,7 @@ export interface IPartial_ContractParams {
     companyId?: number;
     contactId?: number;
     comments?: string;
+    assignedToId?: number;
 }
 
 export class ProductInstanceParams implements IProductInstanceParams {
@@ -5980,6 +6129,7 @@ export class InvoiceParams implements IInvoiceParams {
     productInstanceIds!: number[];
     poNumber?: string;
     comments?: string;
+    assignedToId?: number;
 
     constructor(data?: IInvoiceParams) {
         if (data) {
@@ -6003,6 +6153,7 @@ export class InvoiceParams implements IInvoiceParams {
             }
             this.poNumber = _data["poNumber"];
             this.comments = _data["comments"];
+            this.assignedToId = _data["assignedToId"];
         }
     }
 
@@ -6023,6 +6174,7 @@ export class InvoiceParams implements IInvoiceParams {
         }
         data["poNumber"] = this.poNumber;
         data["comments"] = this.comments;
+        data["assignedToId"] = this.assignedToId;
         return data; 
     }
 }
@@ -6032,6 +6184,7 @@ export interface IInvoiceParams {
     productInstanceIds: number[];
     poNumber?: string;
     comments?: string;
+    assignedToId?: number;
 }
 
 /** Make all properties in T optional */
@@ -6040,6 +6193,7 @@ export class Partial_InvoiceParams implements IPartial_InvoiceParams {
     productInstanceIds?: number[];
     poNumber?: string;
     comments?: string;
+    assignedToId?: number;
 
     constructor(data?: IPartial_InvoiceParams) {
         if (data) {
@@ -6060,6 +6214,7 @@ export class Partial_InvoiceParams implements IPartial_InvoiceParams {
             }
             this.poNumber = _data["poNumber"];
             this.comments = _data["comments"];
+            this.assignedToId = _data["assignedToId"];
         }
     }
 
@@ -6080,6 +6235,7 @@ export class Partial_InvoiceParams implements IPartial_InvoiceParams {
         }
         data["poNumber"] = this.poNumber;
         data["comments"] = this.comments;
+        data["assignedToId"] = this.assignedToId;
         return data; 
     }
 }
@@ -6090,6 +6246,7 @@ export interface IPartial_InvoiceParams {
     productInstanceIds?: number[];
     poNumber?: string;
     comments?: string;
+    assignedToId?: number;
 }
 
 export class ContactListResponse implements IContactListResponse {
