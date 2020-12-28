@@ -61,7 +61,7 @@ class SingleContractPage extends React.Component<Props> {
           </Grid.Column>
           <Grid.Column>
             <Segment>
-              <ContractProductsList />
+              <ContractProductsList contract={contract} />
             </Segment>
           </Grid.Column>
         </Grid>

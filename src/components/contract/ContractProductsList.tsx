@@ -4,7 +4,7 @@ import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
 import {
   Button, Icon, Loader,
 } from 'semantic-ui-react';
-import { Company, Contract } from '../../clients/server.generated';
+import { Contract, ProductInstance } from '../../clients/server.generated';
 import { getSingle } from '../../stores/single/selectors';
 import { SingleEntities } from '../../stores/single/single';
 import { RootState } from '../../stores/store';
@@ -18,7 +18,7 @@ interface State {
 
 }
 
-class CompanyContactList extends React.Component<Props, State> {
+class ContractProductsList extends React.Component<Props, State> {
   public constructor(props: Props) {
     super(props);
   }
@@ -60,12 +60,12 @@ class CompanyContactList extends React.Component<Props, State> {
 
 const mapStateToProps = (state: RootState) => {
   return {
-    contract: getSingle<Contract>(state, SingleEntities.Contract).data,
-    status: getSingle<Contract>(state, SingleEntities.Contract).status,
+    product: getSingle<ProductInstance>(state, SingleEntities.Product).data,
+    status: getSingle<ProductInstance>(state, SingleEntities.Product).status,
   };
 };
 
 const mapDispatchToProps = () => ({
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CompanyContactList));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ContractProductsList));
