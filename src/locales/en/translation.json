@@ -1,0 +1,36 @@
+{
+  "MainMenu": {
+    "products": "Products",
+    "companies": "Companies",
+    "contracts": "Contracts",
+    "contacts": "Contacts",
+    "invoices": "Invoices",
+    "users": "Users",
+    "logout": "Logout"
+  },
+  "Products": {
+    "all": "All Products",
+    "add": "Add Product",
+    "table": {
+      "product": {
+        "name": "Name",
+        "price": "Target price",
+        "status": "Status"
+      }
+    }
+  },
+  "Companies": {
+    "all": "All Companies",
+    "add": "Add Company",
+    "table": {
+      "company": {
+        "name": "Name",
+        "status": "Status",
+        "lastUpdate": "Last Update"
+      }
+    }
+  },
+  "Global": {
+    "search": "Search..."
+  }
+}

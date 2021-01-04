@@ -5,6 +5,9 @@ import { ConnectedRouter } from 'connected-react-router';
 import './App.scss';
 import './Form.scss';
 
+import { withTranslation } from 'react-i18next';
+import i18n from './i18n';
+
 import store, { history } from './stores/store';
 import Routes from './Routes';
 import { showAlert } from './stores/alerts/actionCreators';
@@ -53,4 +56,4 @@ class App extends React.Component<{}, State> {
   }
 }
 
-export default App;
+export default withTranslation()(App);

@@ -1,9 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import {
-  Dropdown, Icon, Loader, Menu,
+  Dropdown, Flag, Icon, Loader, Menu,
 } from 'semantic-ui-react';
 import { AuthStatus, Roles, User } from '../../clients/server.generated';
 import { formatContactName } from '../../helpers/contact';
@@ -22,6 +23,8 @@ interface Props {
 }
 
 function AuthMenu(props: Props) {
+  const { t, i18n } = useTranslation();
+
   if (props.status !== ResourceStatus.FETCHED || props.authStatus === undefined
     || props.profileStatus !== ResourceStatus.FETCHED || props.profile === undefined) {
     return (
@@ -37,6 +40,11 @@ function AuthMenu(props: Props) {
   );
 
   const isAdmin = props.profile.roles.find((r) => r.name === Roles.ADMIN) !== undefined;
+
+  const changeLanguage = async (lng: string) => {
+    await i18n.changeLanguage(lng);
+    console.log(`change language to ${lng}`);
+  };
 
   return (
     <Menu.Menu position="right">
@@ -54,12 +62,34 @@ function AuthMenu(props: Props) {
           {isAdmin ? (
             <Dropdown.Item as={NavLink} to="/user">
               <Icon name="users" />
-              Users
+              {t('users')}
             </Dropdown.Item>
           ) : null}
           <Dropdown.Item onClick={props.logout}>
             <Icon name="sign-out" />
             Logout
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
+      <Dropdown
+        text={(
+          <>
+            <Icon name="globe" />
+          </>
+        ) as any}
+        item
+        className="icon"
+      >
+        <Dropdown.Menu>
+          <Dropdown.Item
+            onClick={() => changeLanguage('en')}
+          >
+            <Flag name="united kingdom" />
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => changeLanguage('nl')}
+          >
+            <Flag name="netherlands" />
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>

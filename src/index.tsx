@@ -1,13 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import TimeAgo from 'javascript-time-ago';
+import './i18n';
 import en from 'javascript-time-ago/locale/en';
+import nl from 'javascript-time-ago/locale/nl';
 import './index.scss';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import 'semantic-ui-css/semantic.min.css';
 
 TimeAgo.addLocale(en);
+TimeAgo.addLocale(nl);
 TimeAgo.setDefaultLocale('en-US');
 
 ReactDOM.render(
