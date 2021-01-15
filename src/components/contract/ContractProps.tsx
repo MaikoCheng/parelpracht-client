@@ -1,9 +1,11 @@
 import React, { ChangeEvent } from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
-import { Form, Input } from 'semantic-ui-react';
+import { Form, Input, TextArea } from 'semantic-ui-react';
 import validator from 'validator';
-import { ActivityType, Contract, ContractParams } from '../../clients/server.generated';
+import {
+  ActivityType, Contract, ContractParams, ContractSummary,
+} from '../../clients/server.generated';
 import { createSingle, deleteSingle, saveSingle } from '../../stores/single/actionCreators';
 import ResourceStatus from '../../stores/resourceStatus';
 import { RootState } from '../../stores/store';
@@ -28,7 +30,7 @@ interface Props {
 
 interface State {
   editing: boolean;
-
+  id: number;
   title: string;
   comments: string;
   contactSelection: number;
@@ -58,6 +60,7 @@ class ContractProps extends React.Component<Props, State> {
     const { contract } = props;
     return {
       title: contract.title,
+      id: contract.id,
       companySelection: contract.companyId,
       contactSelection: contract.contactId,
       comments: contract.comments ?? '',
@@ -115,6 +118,7 @@ class ContractProps extends React.Component<Props, State> {
     const {
       editing,
       title,
+      id,
       companySelection,
       contactSelection,
       assignedToSelection,
@@ -140,6 +144,15 @@ class ContractProps extends React.Component<Props, State> {
 
         <Form style={{ marginTop: '2em' }}>
           <Form.Group widths="equal">
+            <Form.Field
+              control={Input}
+              id="form-input-id"
+              fluid
+              disabled
+              label="ID"
+              value={id}
+              width={5}
+            />
             <Form.Field
               disabled={!editing}
               required
@@ -203,7 +216,7 @@ class ContractProps extends React.Component<Props, State> {
             disabled={!editing}
             fluid
             id="form-input-comments"
-            control={Input}
+            control={TextArea}
             label="Comments"
             value={comments}
             onChange={(e: ChangeEvent<HTMLInputElement>) => this.setState({
