@@ -3,6 +3,7 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import {
   Button, Container, Grid, Header, Icon, Segment,
 } from 'semantic-ui-react';
+import ProductCategoriesTable from '../components/product/ProductCategoriesTable';
 import ProductMenu from '../components/product/ProductMenu';
 import ProductsTable from '../components/product/ProductTable';
 import ProductTableControls from '../components/product/ProductTableControls';
@@ -29,6 +30,11 @@ class ProductsPage extends React.Component<RouteComponentProps, State> {
     if (activeItem === 'products') {
       return (
         <ProductsTable />
+      );
+    }
+    if (activeItem === 'categories') {
+      return (
+        <ProductCategoriesTable />
       );
     }
     return null;
