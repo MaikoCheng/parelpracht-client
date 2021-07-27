@@ -3,11 +3,11 @@ import { Dropdown, Grid } from 'semantic-ui-react';
 import { Line } from 'react-chartjs-2';
 import { connect } from 'react-redux';
 import { ChartOptions } from 'chart.js';
-import { formatPriceFull } from '../../helpers/monetary';
 import { randomColorSet } from '../../helpers/colors';
 import { ProductsPerCategory } from '../../clients/server.generated';
 import { RootState } from '../../stores/store';
 import { getCategoryName } from '../../stores/productcategory/selectors';
+import constructChartOptions from './ConstructChartOptions';
 
 export enum DataSet {
   VALUES,
@@ -26,7 +26,7 @@ interface State {
 }
 
 class CategoryLineChart extends React.Component<Props, State> {
-  private chartReference: React.RefObject<Line>;
+  private readonly chartReference: React.RefObject<typeof Line>;
 
   constructor(props: Props) {
     super(props);
@@ -79,54 +79,73 @@ class CategoryLineChart extends React.Component<Props, State> {
     let options: ChartOptions = {};
     switch (dataSetSelection) {
       case DataSet.VALUES:
-        options = {
-          scales: {
-            yAxes: [{
-              ticks: {
-                beginAtZero: true,
-                callback(value: number) {
-                  return formatPriceFull(value);
-                },
-              },
-            }],
-          },
-          tooltips: {
-            callbacks: {
-              label(tooltipItem: any, data: any) {
-                const value = formatPriceFull(tooltipItem.yLabel);
-                const { label } = data.datasets[tooltipItem.datasetIndex];
-                return ` ${label}: ${value}`;
-              },
-            },
-          },
-        };
+        options = constructChartOptions({
+          stackYAxis: true,
+          stackXAxis: false,
+          tooltip: 'labelled',
+          yAxis: 'price',
+        });
+        // options = {
+        //   scales: {
+        //     yAxes: {
+        //       beginAtZero: true,
+        //       type: 'linear',
+        //       ticks: {
+        //         callback: (tickValue) => {
+        //          const value = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
+        //           return formatPriceFull(value);
+        //         },
+        //       },
+        //     },
+        //   },
+        //   plugins: {
+        //     tooltip: {
+        //       callbacks: {
+        //         label: (tooltipItem) => {
+        //           const { label, formattedValue } = tooltipItem;
+        //           return ` ${label}: ${formattedValue}`;
+        //         },
+        //       },
+        //     },
+        //   },
+        // };
         break;
       case DataSet.AMOUNTS:
-        options = {
-          scales: {
-            yAxes: [{
-              ticks: {
-                beginAtZero: true,
-                callback(value: number) {
-                  return value;
-                },
-                precision: 0,
-              },
-            }],
-          },
-          tooltips: {
-            callbacks: {
-              label(tooltipItem: any, data: any) {
-                const value = tooltipItem.yLabel;
-                const { label } = data.datasets[tooltipItem.datasetIndex];
-                return ` ${label}: ${value}`;
-              },
-            },
-          },
-        };
+        options = constructChartOptions({
+          stackXAxis: false,
+          stackYAxis: true,
+          tooltip: 'labelled',
+        });
+        // options = {
+        //   scales: {
+        //     yAxes: {
+        //       type: 'linear',
+        //       beginAtZero: true,
+        //     },
+        //   },
+        //   plugins: {
+        //     tooltip: {
+        //       callbacks: {
+        //         label: (tooltipItem) => {
+        //           const { label, formattedValue } = tooltipItem;
+        //           return ` ${label}: ${formattedValue}`;
+        //         },
+        //       },
+        //     },
+        //   },
+        // };
         break;
       default:
     }
+
+    options = {
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+      ...options,
+    };
 
     return (
       <>
@@ -155,13 +174,9 @@ class CategoryLineChart extends React.Component<Props, State> {
           <Line
             ref={this.chartReference}
             data={chartData}
-            options={{
-              legend: {
-                display: false,
-              },
-              ...options,
-            }}
-            redraw
+            // @ts-ignore
+            options={options}
+            // redraw
           />
         </div>
       </>

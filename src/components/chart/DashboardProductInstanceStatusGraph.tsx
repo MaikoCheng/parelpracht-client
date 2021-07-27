@@ -6,6 +6,7 @@ import { Bar } from 'react-chartjs-2';
 import { Client, DashboardProductInstanceStats } from '../../clients/server.generated';
 import { dateToFinancialYear } from '../../helpers/timestamp';
 import { formatPriceFull } from '../../helpers/monetary';
+import constructChartOptions from './ConstructChartOptions';
 
 interface Props {}
 
@@ -88,6 +89,14 @@ class DashboardProductInstanceStatusGraph extends React.Component<Props, State> 
   render() {
     const { loading, data, financialYear } = this.state;
     const chartData = this.createBarChartDataObject();
+
+    const options = constructChartOptions({
+      stackXAxis: true,
+      stackYAxis: true,
+      tooltip: 'price',
+      yAxis: 'price',
+    });
+
     return (
       <Segment loading={loading}>
         <Grid style={{ marginBottom: '1em' }}>
@@ -109,32 +118,8 @@ class DashboardProductInstanceStatusGraph extends React.Component<Props, State> 
         <div>
           <Bar
             data={chartData}
-            options={{
-              legend: {
-                display: false,
-              },
-              scales: {
-                xAxes: [{
-                  stacked: true,
-                }],
-                yAxes: [{
-                  stacked: true,
-                  ticks: {
-                    beginAtZero: true,
-                    callback(value: number) {
-                      return formatPriceFull(value);
-                    },
-                  },
-                }],
-              },
-              tooltips: {
-                callbacks: {
-                  label(tooltipItem: any) {
-                    return formatPriceFull(tooltipItem.yLabel);
-                  },
-                },
-              },
-            }}
+            // @ts-ignore
+            options={options}
           />
         </div>
         <Table celled definition style={{ marginTop: '2em' }}>
@@ -229,7 +214,7 @@ class DashboardProductInstanceStatusGraph extends React.Component<Props, State> 
                   )}
                 />
               </Table.Cell>
-              <Table.Cell>{formatPriceFull(data?.suggested.amount || 0)}</Table.Cell>
+              <Table.Cell>{formatPriceFull(data?.paid.amount || 0)}</Table.Cell>
             </Table.Row>
             <Table.Row>
               <Table.Cell># Products</Table.Cell>

@@ -20,7 +20,7 @@ import { showTransientAlert } from '../stores/alerts/actionCreators';
 import FilesList from '../components/files/FilesList';
 import ContractCompactTable from '../components/contract/ContractCompactTable';
 import InvoiceCompactTable from '../components/invoice/InvoiceCompactTable';
-import ProductsContractedGraph from '../components/product/ProductsContractedGraph';
+import ProductsContractedGraph from '../components/chart/ProductsContractedGraph';
 import PricingTable from '../components/productpricing/PricingTable';
 import AuthorizationComponent from '../components/AuthorizationComponent';
 

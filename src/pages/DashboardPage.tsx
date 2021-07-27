@@ -8,7 +8,7 @@ import { User } from '../clients/server.generated';
 import { RootState } from '../stores/store';
 import DashboardInvoices from '../components/dashboard/DashboardInvoices';
 import DashboardContracts from '../components/dashboard/DashboardContracts';
-import DashboardProductInstanceStatusGraph from '../components/dashboard/DashboardProductInstanceStatusGraph';
+import DashboardProductInstanceStatusGraph from '../components/chart/DashboardProductInstanceStatusGraph';
 import DashboardContractedCategoryGraph from '../components/dashboard/DashboardContractedCategoryGraph';
 
 interface Props extends RouteComponentProps {
