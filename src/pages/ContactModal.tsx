@@ -5,157 +5,158 @@ import {
   Loader,
   Modal, Segment, Table,
 } from 'semantic-ui-react';
-import { Dispatch } from 'redux';
-import { connect } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-import { withTranslation, WithTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Contact, ContactFunction, ContractStatus, Gender,
 } from '../clients/server.generated';
 import { clearSingle, fetchSingle } from '../stores/single/actionCreators';
-import { RootState } from '../stores/store';
+import store, { RootState } from '../stores/store';
 import ContactProps from '../components/entities/contact/ContactProps';
 import ResourceStatus from '../stores/resourceStatus';
 import AlertContainer from '../components/alerts/AlertContainer';
-import { getSingle } from '../stores/single/selectors';
 import { SingleEntities } from '../stores/single/single';
-import { TransientAlert } from '../stores/alerts/actions';
 import { showTransientAlert } from '../stores/alerts/actionCreators';
 import { formatContactName } from '../helpers/contact';
 import { formatStatus } from '../helpers/activity';
 import { getContractStatus } from '../stores/contract/selectors';
 import CompanyLink from '../components/entities/company/CompanyLink';
-import { TitleContext } from '../components/TitleContext';
-import { withRouter, WithRouter } from '../WithRouter';
+import { useTitle } from '../components/TitleContext';
+import { useEffect } from 'react';
+import { usePrevious } from '../usePrevious';
+import { JSX } from 'react/jsx-runtime';
 
-interface Props extends WithTranslation, WithRouter {
+interface Props {
   create?: boolean;
   onCompanyPage: boolean;
-  contact: Contact | undefined;
-  status: ResourceStatus;
-  getContractStatus: (id: number) => ContractStatus;
-
-  clearContact: () => void;
-  fetchContact: (id: number) => void;
-  fetchCompany: (id: number) => void;
-  showTransientAlert: (alert: TransientAlert) => void;
 }
 
-class ContactModal extends React.Component<Props> {
-  static defaultProps = {
-    create: undefined,
-  };
+export default function ContactModal(props: Props) {
+  const dispatch = useDispatch();
+  const params = useParams();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { setTitle } = useTitle();
 
-  componentDidMount() {
-    this.props.clearContact();
-    const { params } = this.props.router;
-    if (!this.props.create && params.contactId !== undefined) {
-      this.props.fetchContact(parseInt(params.contactId, 10));
-    }
-  }
+  let contact = useSelector<RootState, Contact>(state => state.single.Contact.data);
+  const status = useSelector<RootState, ResourceStatus>(state => state.single.Contact.status);
+  const getStatus = (id: number): ContractStatus => getContractStatus(store.getState(), id);
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.status === ResourceStatus.FETCHED
-      && prevProps.status === ResourceStatus.SAVING
-    ) {
-      this.closeWithPopupMessage();
-    }
+  const previous = usePrevious({ contact, status });
 
-    if (this.props.status === ResourceStatus.EMPTY
-      && prevProps.status === ResourceStatus.DELETING
-    ) {
-      this.closeWithPopupMessage();
+  let contactId: number | undefined = params.contactId ? parseInt(params.contactId, 10) : undefined;
+  let companyId: number | undefined = params.companyId ? parseInt(params.companyId, 10) : undefined;
 
-      this.props.showTransientAlert({
-        title: 'Success',
-        message: `Contact ${formatContactName(
-          prevProps.contact?.firstName,
-          prevProps.contact?.lastNamePreposition,
-          prevProps.contact?.lastName,
-        )} successfully deleted`,
-        type: 'success',
-        displayTimeInMs: 3000,
-      });
-    }
-  }
-
-  closeWithPopupMessage = () => {
-    const { params, navigate } = this.props.router;
-
+  const closeWithPopupMessage = () => {
     // If the modal is not opened on a company page, we cannot refresh the company information
-    if (params.companyId !== undefined) {
-      this.props.fetchCompany(parseInt(params.companyId, 10));
+    if (companyId !== undefined) {
+      dispatch(fetchSingle(SingleEntities.Company, companyId));
     }
-    if (params.companyId === undefined) {
+
+    if (companyId === undefined) {
       navigate('/contact');
     } else {
-      navigate(`/company/${params.companyId}`);
+      navigate(`/company/${companyId}`);
     }
   };
 
-  close = () => {
-    const { params, navigate } = this.props.router;
-    // If the modal is not opened on a company page, we cannot refresh the company information
-    if (params.companyId !== undefined) {
-      this.props.fetchCompany(parseInt(params.companyId, 10));
+  const close = () => {
+    if (companyId !== undefined) {
+      dispatch(fetchSingle(SingleEntities.Company, companyId));
     }
     navigate(-1);
   };
 
-  public render() {
-    const { t } = this.props;
-    let contact: Contact | undefined;
-
-    if (this.props.create) {
-      document.title = t('entities.contact.newContact');
-      const { params } = this.props.router;
-      const companyId = params.companyId;
-      contact = {
-        id: 0,
-        firstName: '',
-        lastNamePreposition: '',
-        lastName: '',
-        gender: Gender.UNKNOWN,
-        email: '',
-        telephone: '',
-        comments: '',
-        function: ContactFunction.NORMAL,
-        companyId,
-      } as any as Contact;
+  useEffect(() => {
+    // TODO this does not work
+    if (props.create) {
+      setTitle(t('entities.contact.newContact'));
+    } else if (contact === undefined) {
+      setTitle(t('entity.contact'));
     } else {
-      contact = this.props.contact;
+      setTitle(formatContactName(contact.firstName, contact.lastName, contact.lastName));
     }
 
-    if (contact === undefined) {
-      document.title = t('entity.contact');
-      return (
-        <Modal
-          onClose={this.close}
-          closeIcon
-          open
-          dimmer="blurring"
-          size="tiny"
-        >
-          <Segment placeholder attached="bottom">
-            <AlertContainer/>
-            <Dimmer active inverted>
-              <Loader/>
-            </Dimmer>
-          </Segment>
-        </Modal>
-      );
+    dispatch(clearSingle(SingleEntities.Contact));
+
+    if (!props.create && contactId !== undefined) {
+      dispatch(fetchSingle(SingleEntities.Contact, contactId));
+    }
+  }, []);
+
+  useEffect(() => {
+    // if (props.create) {
+    //   setTitle(t('entities.contact.newContact'));
+    // } else if (contact === undefined) {
+    //   setTitle(t('entity.contact'));
+    // } else {
+    //   setTitle(formatContactName(contact.firstName, contact.lastName, contact.lastName));
+    // }
+
+    if (status === ResourceStatus.FETCHED && previous.status === ResourceStatus.SAVING) {
+      closeWithPopupMessage();
     }
 
-    document.title = formatContactName(contact.firstName, contact.lastName, contact.lastName);
+    if (status === ResourceStatus.EMPTY && previous.status === ResourceStatus.DELETING) {
+      // TODO does not work, status not updated on delete
+      closeWithPopupMessage();
 
-    let contractOverview;
+      dispatch(showTransientAlert({
+        title: 'Success',
+        message: `Contact ${formatContactName(
+          previous.contact.firstName,
+          previous.contact.lastNamePreposition,
+          previous.contact.lastName,
+        )} successfully deleted`,
+        type: 'success',
+        displayTimeInMs: 3000,
+      }));
+    }
+  }, [status]);
 
-    if (this.props.create) {
-      contractOverview = '';
-    } else if (contact.contracts === undefined || contact.contracts.length === 0) {
-      contractOverview = <p>{t('entities.product.noContract')}</p>;
-    } else {
-      contractOverview = (
+  if (props.create) {
+    // TODO TYPE
+    contact = {
+      id: 0,
+      firstName: '',
+      lastNamePreposition: '',
+      lastName: '',
+      gender: Gender.UNKNOWN,
+      email: '',
+      telephone: '',
+      comments: '',
+      function: ContactFunction.NORMAL,
+      companyId,
+    } as unknown as Contact;
+  }
+
+  if (contact === undefined) {
+    return (
+      <Modal
+        onClose={close}
+        closeIcon
+        open
+        dimmer="blurring"
+        size="tiny"
+      >
+        <Segment placeholder attached="bottom">
+          <AlertContainer/>
+          <Dimmer active inverted>
+            <Loader/>
+          </Dimmer>
+        </Segment>
+      </Modal>
+    );
+  }
+
+  let contractOverview: JSX.Element;
+  if (props.create) {
+    contractOverview = <></>;
+  } else if (contact.contracts === undefined || contact.contracts.length === 0) {
+    contractOverview = <p>{t('entities.product.noContract')}</p>;
+  } else {
+    contractOverview = (
         <Segment>
           <Header>{t('entity.contracts')}</Header>
           <Table>
@@ -183,7 +184,7 @@ class ContactModal extends React.Component<Props> {
                       <CompanyLink id={contract.companyId}/>
                     </Table.Cell>
                     <Table.Cell>
-                      {formatStatus(this.props.getContractStatus(contract.id))}
+                      {formatStatus(getStatus(contract.id))}
                     </Table.Cell>
                   </Table.Row>
                 );
@@ -191,12 +192,12 @@ class ContactModal extends React.Component<Props> {
             </Table.Body>
           </Table>
         </Segment>
-      );
-    }
+    );
+  }
 
-    return (
+  return (
       <Modal
-        onClose={this.close}
+        onClose={close}
         open
         closeIcon
         dimmer="blurring"
@@ -205,36 +206,14 @@ class ContactModal extends React.Component<Props> {
         <Segment attached="bottom">
           <AlertContainer/>
           <ContactProps
-            onCompanyPage={this.props.onCompanyPage}
+            onCompanyPage={props.onCompanyPage}
             contact={contact}
-            create={this.props.create}
-            onCancel={() => {
-              this.close();
-            }}
+            create={props.create}
+            onCancel={close}
           />
           {contractOverview}
         </Segment>
       </Modal>
-    );
-  }
+  );
 }
 
-const mapStateToProps = (state: RootState) => {
-  return {
-    contact: getSingle<Contact>(state, SingleEntities.Contact).data,
-    status: getSingle<Contact>(state, SingleEntities.Contact).status,
-    getContractStatus: (id: number) => getContractStatus(state, id),
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  clearContact: () => dispatch(clearSingle(SingleEntities.Contact)),
-  fetchContact: (id: number) => dispatch(fetchSingle(SingleEntities.Contact, id)),
-  fetchCompany: (id: number) => dispatch(fetchSingle(SingleEntities.Company, id)),
-  showTransientAlert: (alert: TransientAlert) => dispatch(showTransientAlert(alert)),
-});
-
-ContactModal.contextType = TitleContext;
-
-export default withTranslation()(withRouter(connect(mapStateToProps,
-  mapDispatchToProps)(ContactModal)));

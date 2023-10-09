@@ -9,12 +9,11 @@ import CompanyTable from '../components/entities/company/CompanyTable';
 import CompanyTableControls from '../components/entities/company/CompanyTableControls';
 import { useTitle } from '../components/TitleContext';
 import { useNavigate } from 'react-router-dom';
-import { withRouter } from '../WithRouter';
 
 function CompaniesPage() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { setTitle } = useTitle();
-  const navigate = useNavigate();
 
   React.useEffect(() => {
     setTitle(t('entity.companies'));
@@ -61,4 +60,4 @@ function CompaniesPage() {
   );
 }
 
-export default withRouter(CompaniesPage);
+export default CompaniesPage;

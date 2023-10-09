@@ -2,105 +2,84 @@ import * as React from 'react';
 import {
   Modal,
 } from 'semantic-ui-react';
-import { Dispatch } from 'redux';
-import { connect } from 'react-redux';
-import { withTranslation, WithTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { Company, CompanyStatus, Roles } from '../clients/server.generated';
 import { clearSingle } from '../stores/single/actionCreators';
-import { RootState } from '../stores/store';
 import CompanyProps from '../components/entities/company/CompanyProps';
-import ResourceStatus from '../stores/resourceStatus';
 import AlertContainer from '../components/alerts/AlertContainer';
-import { getSingle } from '../stores/single/selectors';
 import { SingleEntities } from '../stores/single/single';
-import { TransientAlert } from '../stores/alerts/actions';
 import { showTransientAlert } from '../stores/alerts/actionCreators';
-import { TitleContext } from '../components/TitleContext';
-import { withRouter, WithRouter } from '../WithRouter';
+import { useTitle } from '../components/TitleContext';
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { RootState } from '../stores/store';
+import { usePrevious } from '../usePrevious';
+import ResourceStatus from '../stores/resourceStatus';
 
-interface Props extends WithTranslation, WithRouter {
-  status: ResourceStatus;
 
-  clearCompany: () => void;
-  showTransientAlert: (alert: TransientAlert) => void;
-}
+export default function CompaniesCreatePage() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { setTitle } = useTitle();
 
-class CompaniesCreatePage extends React.Component<Props> {
-  componentDidMount() {
-    const { clearCompany, t } = this.props;
-    clearCompany();
-    document.title = t('entities.company.newCompany');
-  }
+  const status = useSelector<RootState, ResourceStatus>(state => state.single.Company.status);
+  const previous = usePrevious({ status });
 
-  componentDidUpdate(prevProps: Props) {
-    if (prevProps.status === ResourceStatus.SAVING
-      && this.props.status === ResourceStatus.FETCHED) {
-      const { navigate } = this.props.router;
+  // TODO typing
+  const company = {
+    id: 0,
+    name: '',
+    description: '',
+    phoneNumber: '',
+    status: CompanyStatus.ACTIVE,
+    comments: '',
+    addressStreet: '',
+    addressCity: '',
+    addressPostalCode: '',
+    addressCountry: '',
+  };
+
+  const close = () => navigate(-1);
+
+  useEffect(() => {
+    dispatch(clearSingle(SingleEntities.Company));
+    setTitle(t('pages.settings.title'));
+  }, []);
+
+  useEffect(() => {
+    if (previous.status === ResourceStatus.SAVING && status === ResourceStatus.FETCHED) {
       navigate('/company');
-      this.props.showTransientAlert({
+      dispatch(showTransientAlert({
         title: 'Success',
         message: 'Company successfully created',
         type: 'success',
         displayTimeInMs: 3000,
-      });
+      }));
     }
-  }
+  }, [status]);
 
-  close = () => {
-    const { navigate } = this.props.router;
-    navigate(-1);
-  };
-
-  public render() {
-    const company = {
-      id: 0,
-      name: '',
-      description: '',
-      phoneNumber: '',
-      status: CompanyStatus.ACTIVE,
-      comments: '',
-      addressStreet: '',
-      addressCity: '',
-      addressPostalCode: '',
-      addressCountry: '',
-    } as any as Company;
-
-    return (
-      <Modal
-        onClose={this.close}
-        open
-        closeIcon
-        dimmer="blurring"
-        closeOnDimmerClick={false}
-      >
-        <Modal.Content>
-          <AlertContainer />
-          <Modal.Description>
-            <CompanyProps
-              company={company}
-              create
-              onCancel={this.close}
-              canEdit={[Roles.ADMIN, Roles.GENERAL]}
-              canDelete={[Roles.ADMIN]}
-            />
-          </Modal.Description>
-        </Modal.Content>
-      </Modal>
-    );
-  }
+  return (
+    <Modal
+      onClose={close}
+      open
+      closeIcon
+      dimmer="blurring"
+      closeOnDimmerClick={false}
+    >
+      <Modal.Content>
+        <AlertContainer />
+        <Modal.Description>
+          <CompanyProps
+            company={company}
+            create
+            onCancel={close}
+            canEdit={[Roles.ADMIN, Roles.GENERAL]}
+            canDelete={[Roles.ADMIN]}
+          />
+        </Modal.Description>
+      </Modal.Content>
+    </Modal>
+  );
 }
-
-const mapStateToProps = (state: RootState) => {
-  return {
-    status: getSingle<Company>(state, SingleEntities.Company).status,
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  clearCompany: () => dispatch(clearSingle(SingleEntities.Company)),
-  showTransientAlert: (alert: TransientAlert) => dispatch(showTransientAlert(alert)),
-});
-
-CompaniesCreatePage.contextType = TitleContext;
-
-export default withTranslation()(withRouter(connect(mapStateToProps, mapDispatchToProps)(CompaniesCreatePage)));
